@@ -1,0 +1,11 @@
+# Librerías principales para análisis de datos y machine learning
+pandas
+numpy
+scikit-learn
+matplotlib
+seaborn
+jupyterlab
+
+# Nota: Para generar este archivo con las versiones exactas de tu entorno,
+# activa tu entorno virtual y ejecuta el siguiente comando en la terminal:
+# pip freeze > requirements.txt

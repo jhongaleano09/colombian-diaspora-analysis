@@ -1,0 +1,33 @@
+# Entornos virtuales
+.venv/
+venv/
+env/
+ENV/
+
+# Archivos de caché de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Archivos de configuración de IDEs
+.vscode/
+.idea/
+*.swp
+
+# No subir datasets al repositorio. Se deben descargar.
+data/raw/
+data/processed/
+
+# Notebooks autogenerados y temporales
+.ipynb_checkpoints
+nb_conda_kernels.json
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Logs y outputs locales
+logs/
+*.log
+
