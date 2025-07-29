@@ -8,35 +8,38 @@ def load_data(file_path):
     print("¡Dataset cargado exitosamente!")
     return df
 
+# src/data_preprocessing.py
+
 def clean_data(df):
     """
     Realiza la limpieza inicial de datos: convierte fechas, maneja valores
     no estándar y elimina registros inconsistentes.
     """
     print("Iniciando limpieza de datos...")
-    # Convertir fecha de registro y extraer componentes
-    df['Fecha de Registro'] = pd.to_datetime(df['Fecha de Registro'], errors='coerce')
-    df.dropna(subset=['Fecha de Registro'], inplace=True) # Eliminar filas donde la fecha no se pudo convertir
+    
+    # Reemplazar valores no estándar (-1) con NaN para un manejo adecuado
+    df.replace(-1, np.nan, inplace=True)
+    
+    # Imputar 'Edad (años)' con la media
+    mean_age = df['Edad (años)'].mean()
+    df['Edad (años)'].fillna(mean_age, inplace=True)
+    
+    # Imputar 'Estatura (CM)' con un valor constante (ej. media o mediana)
+    # Aquí se usa la media como ejemplo.
+    mean_height = df['Estatura (CM)'].mean()
+    df['Estatura (CM)'].fillna(mean_height, inplace=True)
+    
+    # Eliminar filas con valores nulos en columnas críticas si es necesario
+    # (En este caso, no se eliminan filas para mantener el tamaño del dataset)
+
+    # Convertir 'Fecha de Registro' a datetime y crear columna de año
+    df['Fecha de Registro'] = pd.to_datetime(df['Fecha de Registro'], format='%Y-%m', errors='coerce')
+    df.dropna(subset=['Fecha de Registro'], inplace=True) # Eliminar fechas no válidas
     df['Año Registro'] = df['Fecha de Registro'].dt.year
-
-    # Eliminar registros anómalos del año 1900
-    df = df[df['Año Registro'] != 1900].copy()
-
-    # Reemplazar valores no estándar en 'Edad (años)' con la media
-    mean_age_valid = df[df['Edad (años)'] != -1]['Edad (años)'].mean()
-    df.loc[df['Edad (años)'] == -1, 'Edad (años)'] = mean_age_valid
-
-    # Reemplazar valores no estándar en 'Estatura (CM)'
-    # (Asumimos un reemplazo con la media/mediana o un valor fijo)
-    df.loc[(df['Estatura (CM)'] < 80) | (df['Estatura (CM)'] > 220), 'Estatura (CM)'] = 165
-
+    
+    # Filtrar registros inconsistentes (ej. 'Cantidad de personas' <= 0)
+    df = df[df['Cantidad de personas'] > 0].copy()
+    
     print(f"Limpieza finalizada. Forma del DataFrame: {df.shape}")
     return df
 
-def preprocess_features(df):
-    """Prepara las características para el modelado (encoding, scaling, etc.)."""
-    # Aquí irían tus funciones para One-Hot Encoding, Label Encoding, StandardScaler, etc.
-    # Ejemplo:
-    # df_encoded = pd.get_dummies(df, columns=['País', 'Nivel Académico'])
-    # ...
-    return df_processed
