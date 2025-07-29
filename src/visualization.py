@@ -97,3 +97,52 @@ def plot_weighted_age_histogram(df):
     plt.legend()
     plt.tight_layout()
     plt.show()
+
+# src/visualization.py
+import os
+
+def plot_correlation_heatmap(df, title='Matriz de Correlación de Variables Numéricas', save_path=None):
+    """
+    Calcula y grafica una matriz de correlación (heatmap) para las 
+    columnas numéricas de un DataFrame.
+
+    Args:
+        df (pd.DataFrame): El DataFrame de entrada.
+        title (str, optional): Título del gráfico.
+        save_path (str, optional): Ruta para guardar la imagen del gráfico. 
+                                   Si es None, el gráfico solo se muestra.
+    """
+    print("Generando heatmap de correlación...")
+    
+    # 1. Seleccionar solo columnas numéricas para el análisis
+    df_numeric = df.select_dtypes(include=np.number)
+    
+    # 2. Calcular la matriz de correlación
+    correlation_matrix = df_numeric.corr()
+    
+    # 3. Configurar el tamaño y crear el heatmap
+    plt.figure(figsize=(12, 10))
+    sns.heatmap(
+        correlation_matrix, 
+        annot=True,      # Mostrar los valores de correlación en las celdas
+        cmap='coolwarm', # Esquema de color divergente
+        fmt=".2f",       # Formato de dos decimales
+        linewidths=.5
+    )
+    
+    # 4. Añadir título y ajustar el layout
+    plt.title(title, fontsize=16)
+    plt.tight_layout()  # Ajusta el gráfico para evitar que las etiquetas se superpongan
+    
+    # 5. Guardar la figura si se especifica una ruta
+    if save_path:
+        # Asegurarse de que el directorio de destino exista
+        output_dir = os.path.dirname(save_path)
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+            
+        plt.savefig(save_path, dpi=300) # Guardar con buena resolución
+        print(f"Gráfico guardado en: {save_path}")
+        
+    # 6. Mostrar el gráfico
+    plt.show()
