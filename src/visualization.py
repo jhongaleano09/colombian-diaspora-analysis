@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+from sklearn.decomposition import PCA
+
 
 def plot_top_countries(df, top_n=15):
     """Grafica el top N de países con más colombianos registrados."""
@@ -146,3 +148,58 @@ def plot_correlation_heatmap(df, title='Matriz de Correlación de Variables Num�
         
     # 6. Mostrar el gráfico
     plt.show()
+
+
+
+# src/visualization.py
+# Análisis de varianza explicada por PCA
+
+def plot_pca_variance_analysis(data):
+    """
+    Realiza un análisis de PCA para visualizar la varianza explicada acumulada y
+    ayudar a determinar el número óptimo de componentes.
+
+    Args:
+        data (pd.DataFrame or np.ndarray): El conjunto de datos escalado.
+    """
+    print("Iniciando análisis de PCA para determinar la varianza explicada...")
+    
+    try:
+        # Usamos PCA sin n_components para calcular la varianza de todos los componentes
+        pca_explorer = PCA()
+        pca_explorer.fit(data)
+
+        # Calcular la varianza explicada acumulada
+        cumulative_explained_variance = np.cumsum(pca_explorer.explained_variance_ratio_)
+
+        # --- Visualización ---
+        plt.figure(figsize=(12, 7))
+        plt.plot(range(1, len(cumulative_explained_variance) + 1), cumulative_explained_variance, 
+                 marker='.', linestyle='-', color='b', markersize=4)
+        plt.title('Varianza Explicada Acumulada por Componentes Principales', fontsize=16)
+        plt.xlabel('Número de Componentes Principales')
+        plt.ylabel('Varianza Explicada Acumulada')
+        plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+
+        # Líneas de referencia para umbrales comunes
+        thresholds = {0.90: 'r', 0.95: 'g', 0.99: 'purple'}
+        for thresh, color in thresholds.items():
+            n_components = np.argmax(cumulative_explained_variance >= thresh) + 1
+            plt.axhline(y=thresh, color=color, linestyle='--', label=f'{int(thresh*100)}% Varianza ({n_components} comps)')
+            print(f"Componentes para explicar al menos el {int(thresh*100)}% de la varianza: {n_components}")
+
+        plt.legend(loc='best')
+        plt.ylim(top=1.05)
+        
+        # Guardar la figura
+        plt.savefig('reports/figures/pca_explained_variance.png')
+        plt.show()
+
+    except MemoryError:
+        print("\nERROR DE MEMORIA durante el análisis de varianza.")
+        print("Sugerencia: Ejecuta esta función sobre una muestra aleatoria del dataset para estimar los componentes.")
+        print("Ejemplo: `plot_pca_variance_analysis(data.sample(n=100000))`")
+        raise
+    except Exception as e:
+        print(f"Ocurrió un error inesperado durante el análisis de PCA: {e}")
+        raise
