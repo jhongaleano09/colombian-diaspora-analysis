@@ -161,3 +161,45 @@ def create_preprocessing_pipeline(numerical_features, categorical_features):
     )
     print("Pipeline de preprocesamiento creado.")
     return preprocessor
+
+
+# src/data_preprocessing.py
+# Ejecuta MiniBatchKMeans para encontrar el número óptimo de clusters
+
+def add_cluster_labels(original_df, pca_df_with_clusters, cluster_col_name, new_col_name='Cluster'):
+    """
+    Añade de forma segura las etiquetas de cluster a un DataFrame original.
+    
+    Asegura la alineación correcta reseteando los índices de ambos DataFrames
+    antes de la unión.
+
+    Args:
+        original_df (pd.DataFrame): El DataFrame original (ej. df_migracion).
+        pca_df_with_clusters (pd.DataFrame): El DataFrame que contiene los datos
+                                             usados para clustering y la columna de etiquetas.
+        cluster_col_name (str): El nombre de la columna de etiquetas en `pca_df_with_clusters`.
+        new_col_name (str): El nombre que tendrá la columna de cluster en el DataFrame resultante.
+
+    Returns:
+        pd.DataFrame: Una copia del DataFrame original con la columna de cluster añadida.
+    """
+    print("Asegurando alineación de índices y añadiendo etiquetas de cluster...")
+    
+    # Trabajar con copias para evitar modificar los dataframes originales
+    df_orig_aligned = original_df.reset_index(drop=True)
+    df_pca_aligned = pca_df_with_clusters.reset_index(drop=True)
+
+    if len(df_orig_aligned) != len(df_pca_aligned):
+        raise ValueError(
+            "Las longitudes de los DataFrames no coinciden. "
+            f"Original: {len(df_orig_aligned)}, Con Clusters: {len(df_pca_aligned)}"
+        )
+    
+    if cluster_col_name not in df_pca_aligned.columns:
+        raise KeyError(f"La columna '{cluster_col_name}' no se encuentra en el DataFrame de PCA.")
+
+    df_result = df_orig_aligned.copy()
+    df_result[new_col_name] = df_pca_aligned[cluster_col_name]
+    
+    print(f"Columna '{cluster_col_name}' añadida como '{new_col_name}'.")
+    return df_result

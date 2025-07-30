@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 from sklearn.decomposition import PCA
+import os # Para asegurar que el directorio de figuras exista
 
 
 def plot_top_countries(df, top_n=15):
@@ -203,3 +204,94 @@ def plot_pca_variance_analysis(data):
     except Exception as e:
         print(f"Ocurrió un error inesperado durante el análisis de PCA: {e}")
         raise
+
+
+# src/visualization.py
+
+
+def plot_k_selection_metrics(metrics_df, save_path='reports/figures/k_selection_metrics.png'):
+    """
+    Grafica las métricas de evaluación de k (Inertia, Silhouette, etc.).
+
+    Args:
+        metrics_df (pd.DataFrame): DataFrame con columnas 'k', 'inertia', 'silhouette', etc.
+        save_path (str): Ruta para guardar la figura.
+    """
+    os.makedirs(os.path.dirname(save_path), exist_ok=True) # Crea el directorio si no existe
+    
+    fig, axes = plt.subplots(1, 3, figsize=(20, 6))
+    k_range = metrics_df['k']
+
+    # 1. Gráfico del Codo (Inertia)
+    axes[0].plot(k_range, metrics_df['inertia'], marker='o', linestyle='-')
+    axes[0].set_title('Método del Codo (Inertia)', fontsize=14)
+    axes[0].set_xlabel('Número de Clusters (k)')
+    axes[0].set_ylabel('Inertia (WCSS)')
+    axes[0].grid(True)
+    axes[0].set_xticks(k_range)
+
+    # 2. Gráfico de Silhouette Score
+    axes[1].plot(k_range, metrics_df['silhouette'], marker='o', linestyle='-')
+    axes[1].set_title('Silhouette Score Promedio', fontsize=14)
+    axes[1].set_xlabel('Número de Clusters (k)')
+    axes[1].set_ylabel('Silhouette Score (mayor es mejor)')
+    axes[1].grid(True)
+    axes[1].set_xticks(k_range)
+
+    # 3. Gráfico de Davies-Bouldin Index
+    axes[2].plot(k_range, metrics_df['davies_bouldin'], marker='o', linestyle='-')
+    axes[2].set_title('Davies-Bouldin Index', fontsize=14)
+    axes[2].set_xlabel('Número de Clusters (k)')
+    axes[2].set_ylabel('DB Score (menor es mejor)')
+    axes[2].grid(True)
+    axes[2].set_xticks(k_range)
+
+    plt.suptitle('Métricas de Evaluación para Selección de k', fontsize=18, y=1.02)
+    plt.tight_layout()
+    plt.savefig(save_path)
+    plt.show()
+
+def plot_cluster_results(df, x_col, y_col, hue_col, centroids=None, save_path='reports/figures/cluster_visualization.png'):
+    """
+    Visualiza los resultados del clustering en un scatter plot 2D.
+
+    Args:
+        df (pd.DataFrame): DataFrame con los datos y las etiquetas del cluster.
+        x_col (str): Nombre de la columna para el eje X.
+        y_col (str): Nombre de la columna para el eje Y.
+        hue_col (str): Nombre de la columna para el color (etiquetas del cluster).
+        centroids (pd.DataFrame, optional): DataFrame de los centroides a graficar.
+        save_path (str): Ruta para guardar la figura.
+    """
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    
+    plt.figure(figsize=(12, 9))
+    sns.scatterplot(
+        x=df[x_col], 
+        y=df[y_col], 
+        hue=df[hue_col],
+        palette='viridis', 
+        alpha=0.5, 
+        s=10, # 's' pequeño para datasets grandes
+        legend='full'
+    )
+    
+    if centroids is not None:
+        plt.scatter(
+            centroids[x_col], 
+            centroids[y_col],
+            marker='X', 
+            s=200, 
+            c='red', 
+            edgecolor='black', 
+            label='Centroides'
+        )
+
+    plt.title(f'Visualización de Clusters en {x_col} vs {y_col}', fontsize=16)
+    plt.xlabel(f'Componente Principal ({x_col})')
+    plt.ylabel(f'Componente Principal ({y_col})')
+    plt.legend(title='Cluster ID')
+    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.tight_layout()
+    plt.savefig(save_path)
+    plt.show()
