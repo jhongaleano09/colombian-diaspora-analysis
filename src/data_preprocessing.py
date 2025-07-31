@@ -203,3 +203,75 @@ def add_cluster_labels(original_df, pca_df_with_clusters, cluster_col_name, new_
     
     print(f"Columna '{cluster_col_name}' añadida como '{new_col_name}'.")
     return df_result
+
+
+# src/data_preprocessing.py
+
+def add_cluster_labels_to_dataframe(original_df: pd.DataFrame, pca_df_with_clusters: pd.DataFrame, cluster_col_name: str, new_col_name: str = 'Cluster') -> pd.DataFrame:
+    """
+    Añade de forma segura las etiquetas de cluster a una copia del DataFrame original.
+    Alinea los DataFrames reseteando sus índices antes de la unión.
+
+    Args:
+        original_df (pd.DataFrame): El DataFrame que contiene los datos originales
+                                    o preprocesados (ej. df_cleaned).
+        pca_df_with_clusters (pd.DataFrame): El DataFrame que contiene los datos
+                                             usados para clustering y la columna de etiquetas.
+        cluster_col_name (str): El nombre de la columna de etiquetas en `pca_df_with_clusters`.
+        new_col_name (str): El nombre que tendrá la columna de cluster en el DataFrame resultante.
+
+    Returns:
+        pd.DataFrame: Una copia del DataFrame original con la columna de cluster añadida.
+    """
+    print("Asegurando alineación de índices y añadiendo etiquetas de cluster...")
+    
+    # Trabajar con copias para evitar modificar los dataframes originales
+    df_orig_aligned = original_df.reset_index(drop=True)
+    df_pca_aligned = pca_df_with_clusters.reset_index(drop=True)
+
+    if len(df_orig_aligned) != len(df_pca_aligned):
+        raise ValueError(
+            "Las longitudes de los DataFrames no coinciden. "
+            f"Original: {len(df_orig_aligned)}, Con Clusters: {len(df_pca_aligned)}"
+        )
+    
+    if cluster_col_name not in df_pca_aligned.columns:
+        raise KeyError(f"La columna '{cluster_col_name}' no se encuentra en el DataFrame de PCA.")
+
+    df_result = df_orig_aligned.copy()
+    df_result[new_col_name] = df_pca_aligned[cluster_col_name]
+    
+    print(f"Columna '{cluster_col_name}' añadida exitosamente como '{new_col_name}'.")
+    return df_result
+
+# src/data_preprocessing.py
+
+def create_date_features(df: pd.DataFrame, date_column: str = 'Fecha de Registro') -> pd.DataFrame:
+    """
+    Crea columnas de año, mes y día a partir de una columna de fecha.
+    La función maneja errores de conversión y modifica el DataFrame "in-place".
+
+    Args:
+        df (pd.DataFrame): El DataFrame a modificar.
+        date_column (str): El nombre de la columna que contiene la fecha.
+
+    Returns:
+        pd.DataFrame: El DataFrame modificado con las nuevas columnas de fecha.
+    """
+    if date_column not in df.columns:
+        raise KeyError(f"La columna de fecha '{date_column}' no se encuentra en el DataFrame.")
+
+    print(f"Creando características de fecha desde la columna '{date_column}'...")
+    
+    # Convertir a datetime, manejando errores al ponerlos como NaT (Not a Time)
+    # Esto evita que el proceso se detenga por una fecha mal formada.
+    temp_date_series = pd.to_datetime(df[date_column], errors='coerce')
+    
+    # Crear nuevas columnas. Si la conversión a NaT falló, el resultado será NaN.
+    df['Año Registro'] = temp_date_series.dt.year
+    df['Mes Registro'] = temp_date_series.dt.month
+    df['Día Registro'] = temp_date_series.dt.day
+    
+    print("Columnas 'Año Registro', 'Mes Registro', y 'Día Registro' creadas.")
+    
+    return df
