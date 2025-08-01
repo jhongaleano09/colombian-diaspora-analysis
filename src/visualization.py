@@ -3,7 +3,10 @@ import seaborn as sns
 import numpy as np
 from sklearn.decomposition import PCA
 import os # Para asegurar que el directorio de figuras exista
-
+import pandas as pd
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from sklearn.pipeline import Pipeline
+from typing import Dict, List
 
 def plot_top_countries(df, top_n=15):
     """Grafica el top N de países con más colombianos registrados."""
@@ -295,3 +298,53 @@ def plot_cluster_results(df, x_col, y_col, hue_col, centroids=None, save_path='r
     plt.tight_layout()
     plt.savefig(save_path)
     plt.show()
+
+
+
+# src/visualization.py
+
+
+def plot_all_confusion_matrices(trained_models: Dict[str, Pipeline], X_test: pd.DataFrame, y_test: pd.Series, unique_labels: List):
+    """Genera y muestra una matriz de confusión para cada modelo entrenado."""
+    class_labels = [f"Cluster {i}" for i in sorted(unique_labels)]
+    
+    for name, pipeline in trained_models.items():
+        y_pred = pipeline.predict(X_test)
+        cm = confusion_matrix(y_test, y_pred, labels=sorted(unique_labels))
+        
+        fig, ax = plt.subplots(figsize=(8, 6))
+        disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=class_labels)
+        disp.plot(cmap=plt.cm.Blues, ax=ax, xticks_rotation=45)
+        ax.set_title(f'Matriz de Confusión - {name}')
+        plt.tight_layout()
+        plt.show()
+
+def plot_all_feature_importances(trained_models: Dict[str, Pipeline], feature_names: List[str], top_n: int = 20):
+    """Extrae y grafica la importancia de características para cada modelo."""
+    for name, pipeline in trained_models.items():
+        try:
+            classifier = pipeline.named_steps['classifier']
+            importances = classifier.feature_importances_
+            
+            df_importance = pd.DataFrame({'Feature': feature_names, 'Importance': importances})
+            df_importance = df_importance.sort_values(by='Importance', ascending=False)
+            
+            n_features_to_plot = min(top_n, len(feature_names))
+
+            plt.figure(figsize=(10, 8))
+            sns.barplot(
+                x='Importance', 
+                y='Feature', 
+                data=df_importance.head(n_features_to_plot), 
+                palette='viridis'
+            )
+            plt.title(f'Top {n_features_to_plot} PCs más importantes - {name}')
+            plt.xlabel('Importancia')
+            plt.ylabel('Componente Principal')
+            plt.tight_layout()
+            plt.show()
+
+        except AttributeError:
+            print(f"El modelo '{name}' no tiene el atributo 'feature_importances_'. Se omite el gráfico.")
+        except Exception as e:
+            print(f"No se pudo generar el gráfico de importancia para '{name}': {e}")

@@ -275,3 +275,48 @@ def create_date_features(df: pd.DataFrame, date_column: str = 'Fecha de Registro
     print("Columnas 'Año Registro', 'Mes Registro', y 'Día Registro' creadas.")
     
     return df
+
+
+# src/data_preprocessing.py
+
+def prepare_modeling_data(df: pd.DataFrame, target_column: str) -> tuple[pd.DataFrame, pd.Series, list]:
+    """
+    Prepara el DataFrame para el modelado supervisado.
+
+    - Limpia NaNs en la columna objetivo.
+    - Identifica automáticamente las características (columnas 'PC_').
+    - Separa características (X) y objetivo (y).
+
+    Args:
+        df (pd.DataFrame): DataFrame con datos (generalmente post-PCA y con clusters).
+        target_column (str): Nombre de la columna objetivo.
+
+    Returns:
+        tuple[pd.DataFrame, pd.Series, list]: Una tupla conteniendo:
+            - X (pd.DataFrame): DataFrame de características (PCs).
+            - y (pd.Series): Serie del objetivo (clusters).
+            - pc_features (list): Lista con los nombres de las columnas de características.
+    """
+    print("Preparando datos para el modelado...")
+    if target_column not in df.columns:
+        raise ValueError(f"La columna '{target_column}' no se encuentra en el DataFrame.")
+
+    # Copiar para evitar SettingWithCopyWarning
+    df_processed = df.copy()
+
+    # Limpieza de la columna objetivo
+    df_processed.dropna(subset=[target_column], inplace=True)
+    df_processed[target_column] = pd.to_numeric(df_processed[target_column], errors='coerce').astype(int)
+    
+    # Identificar características (Componentes Principales)
+    pc_features = [col for col in df_processed.columns if col.startswith('PC_')]
+    if not pc_features:
+        raise ValueError("No se encontraron columnas de componentes principales (con prefijo 'PC_').")
+
+    X = df_processed[pc_features]
+    y = df_processed[target_column]
+
+    print(f"Datos preparados: {X.shape[0]} muestras, {len(pc_features)} características.")
+    print(f"Distribución del objetivo:\n{y.value_counts(normalize=True).round(3)}")
+    
+    return X, y, pc_features
