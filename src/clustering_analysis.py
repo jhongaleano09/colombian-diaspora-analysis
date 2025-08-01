@@ -143,3 +143,35 @@ def get_cluster_summary_stats(df, cluster_col, numeric_cols):
     cluster_stats = df.groupby(cluster_col)[numeric_cols].agg(['mean', 'std'])
     
     return cluster_stats
+
+
+# En src/clustering_analysis.py
+
+def display_categorical_distribution_by_cluster(df, target_col, cluster_col='Cluster', top_n=None):
+    """
+    Calcula y muestra la distribución porcentual de una variable categórica
+    dentro de cada cluster.
+
+    Args:
+        df (pd.DataFrame): DataFrame con los datos.
+        target_col (str): Nombre de la columna categórica a analizar.
+        cluster_col (str): Nombre de la columna de cluster (default: 'Cluster').
+        top_n (int, optional): Si se especifica, muestra solo las 'top_n'
+                               categorías más frecuentes. Por defecto es None (mostrar todas).
+    """
+    print(f"--- Distribución de '{target_col}' por Cluster (%) ---")
+
+    if cluster_col not in df.columns or target_col not in df.columns:
+        raise KeyError(f"Una o ambas columnas ('{cluster_col}', '{target_col}') no se encuentran en el DataFrame.")
+
+    # Calcular la tabla de contingencia normalizada por filas (índice)
+    distribution_table = pd.crosstab(df[cluster_col], df[target_col], normalize='index') * 100
+
+    # Si se especifica top_n, filtrar por las categorías más comunes del dataset
+    if top_n and top_n > 0:
+        top_categories = df[target_col].value_counts().nlargest(top_n).index
+        available_categories = [cat for cat in top_categories if cat in distribution_table.columns]
+        distribution_table = distribution_table[available_categories]
+        print(f"(Mostrando las {len(available_categories)} categorías más frecuentes)")
+
+    display(distribution_table.round(1))
